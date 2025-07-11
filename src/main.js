@@ -41,20 +41,25 @@ document.body.style.alignItems = 'center';
 
     // Load the bunny texture
     const texturemc = await Assets.load('/public/perso/TEST.png');
-    const textureprojectile = await Assets.load('/public/trucs/projectile.png')
+    const textureprojectile = await Assets.load('/public/trucs/projectile.png');
+    const textureennemi1 = await Assets.load('/public/ennemi/stage1/ennemi1.png');
 
     // cree les sprites 
     const mc = new Sprite(texturemc);
     const projectile = new Sprite(textureprojectile);
+    const ennemi1 = new Sprite(textureennemi1);
     ///sprite.width = 200;
     ///sprite.height = 400;
     ///sprite.scale.set(1, 1);
 
     // Met le centre de rotation au centre du sprite juste parce que
     mc.anchor.set(0.5);
-    // Move the sprite to the center of the screen
+    // Placement de base du joueur
     mc.x = app.screen.width / 2;
-    mc.y = app.screen.height / 2;
+    mc.y = app.screen.height * 0.72;
+    // ennemi test
+    ennemi1.x = app.screen.width / 2;
+    ennemi1.y = app.screen.height / 4;
 
     // vitesse 
     let speed = 1.70;
@@ -104,6 +109,7 @@ document.body.style.alignItems = 'center';
 
     app.stage.addChild(text);
     app.stage.addChild(mc);
+    app.stage.addChild(ennemi1);
 
 
     // la game loop cogno
@@ -114,7 +120,6 @@ document.body.style.alignItems = 'center';
     // if (keys['d']) mc.x += speed;    // Droite
     // if (keys['z']) mc.y -= speed;    // Haut
     // if (keys['s']) mc.y += speed;    // Bas
-
 
     // fix diagonal haut gauche
     if (keys['z'] && keys['q']) {
@@ -211,6 +216,8 @@ document.body.style.alignItems = 'center';
       // faire une deuxieme loop est probablement pas optimisé jsp
       app.ticker.add(() => {
         projectile.y -= 10;
+
+        
       });
     }
 })();
