@@ -1,6 +1,7 @@
 import { Application, Assets, Sprite, Text, TextStyle } from 'pixi.js';
 import {initDevtools} from '@pixi/devtools';
 
+
 // place le jeu azu centre de la page
 document.body.style.margin = '0';
 document.body.style.height = '100vh';
@@ -56,7 +57,9 @@ document.body.style.alignItems = 'center';
     mc.y = app.screen.height / 2;
 
     // vitesse 
-    let speed = 3;
+    let speed = 1.70;
+    let diagonalSpeed = speed / Math.sqrt(2);
+    let diagonalSpeedslow
     // tableau keys
     const keys = {};
 
@@ -81,14 +84,9 @@ document.body.style.alignItems = 'center';
     keys[key] = true;
     // ralentit si on presse latouche j
     if (key === 'j') {
-      speed = 1.5;
+      speed = 1.1;
     }
 
-    
-    if (keys['z'] && keys['q'] ) {
-      speed = 15;
-    }
-    
   });
 
   // detecte les touches relachées
@@ -97,14 +95,12 @@ document.body.style.alignItems = 'center';
     keys[key] = false;
     // relache j
     if (key === 'j') {
-      speed = 3;
+      speed = 1.70;
     }
 
-
-
-
-
   });
+
+
 
     app.stage.addChild(text);
     app.stage.addChild(mc);
@@ -114,14 +110,55 @@ document.body.style.alignItems = 'center';
     app.ticker.add((time) =>
     {
 
-    if (keys['q']) mc.x -= speed;    // Gauche
-    if (keys['d']) mc.x += speed;    // Droite
-    if (keys['z']) mc.y -= speed;    // Haut
-    if (keys['s']) mc.y += speed;    // Bas
+    // if (keys['q']) mc.x -= speed;    // Gauche
+    // if (keys['d']) mc.x += speed;    // Droite
+    // if (keys['z']) mc.y -= speed;    // Haut
+    // if (keys['s']) mc.y += speed;    // Bas
 
 
+    // fix diagonal haut gauche
+    if (keys['z'] && keys['q']) {
+      mc.x -= diagonalSpeed;
+      mc.y -= diagonalSpeed;
+    } else if (keys['q']) {     
+      mc.x -= speed;
+    } else if (keys['z']) {
+      mc.y -= speed;
+    }
+
+    // fix diagonal haut droit
+    if (keys['z'] && keys['d']) {
+      mc.x += diagonalSpeed;
+      mc.y -= diagonalSpeed;
+    } else if (keys['d']) {
+      mc.x += speed;
+    } else if (keys['z']) {
+      mc.y -= speed;
+    }
 
     
+    // fix diagonal bas gauche
+    if (keys['s'] && keys['q']) {
+      mc.y += diagonalSpeed;
+      mc.x -= diagonalSpeed;
+    } else if (keys['s']) {
+      mc.y += speed
+    } else if (keys['q']) {
+      mc.x -= speed;
+    }
+
+    // fix diagonal bas droit
+    if (keys['s'] && keys['d']) {
+      mc.y += diagonalSpeed;
+      mc.x += diagonalSpeed;
+    } else if (keys['s']) {
+      mc.y += speed
+    } else if (keys['d']) {
+      mc.x += speed;
+    }
+
+    
+
     // lance les projectiles si on presse k
     if (keys['k']) {
       tir();
