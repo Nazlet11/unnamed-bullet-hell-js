@@ -44,6 +44,11 @@ document.body.style.alignItems = 'center';
     // Cree l objet bounds
     const bounds = new Bounds();
 
+    // creation du tableau des ennemis
+    let ennemis = [];
+
+    
+
     // Met le centre de rotation au centre du sprite juste parce que
     mc.anchor.set(0.5);
     // Placement de base du joueur
@@ -100,6 +105,23 @@ document.body.style.alignItems = 'center';
     app.stage.addChild(ennemi1);
 
 
+    for (let i = 0; i < 15; i++) {
+      const ennemi = new Sprite(textureennemi1);
+      ennemi.x = Math.random() * app.screen.width;
+      ennemi.y = Math.random() * app.screen.height * 0.5;
+      app.stage.addChild(ennemi);
+      ennemis.push(ennemi);
+    }
+
+
+
+
+
+
+
+
+
+
     // la game loop cogno
     app.ticker.add((time) =>
     {
@@ -151,10 +173,16 @@ document.body.style.alignItems = 'center';
     }
 
     // detecte la collision entre joueur et ennemi
-    if (isColliding(mc, ennemi1)) {
-      console.log("Collision détectée !");
-      mc.destroy();
+
+
+    // detecte la collision entre ennemi et joueur
+    for (const ennemi of ennemis){
+      if (isColliding(mc, ennemi)) {
+        console.log("Collision détectée !");
+        ennemi.destroy();
+      }
     }
+
 
     // lance les projectiles si on presse k
     if (keys['k']) {
@@ -178,8 +206,9 @@ document.body.style.alignItems = 'center';
 
 
   
-
+  
   ////////////////////// Si ce commentaire est tjrs la c est que j ai pas encore geré la suppressions des projectiles parce que il restent indefiniment la dc gros sac confirmed
+  ////////////////////// Faut aussi faire en sorte que le perso puisse pas sortir de l'écran
 
   // j'ai pas reussi a faire un wait(); comme dans python ou jsp parce que tt est en async ou juste cc parce que c'est du javascript jsp dc
   // ce que je vais faire c'est faire un if le temps depuis le dernier tir est au dessus du cooldown la on tire
@@ -209,8 +238,13 @@ document.body.style.alignItems = 'center';
     // faire une deuxieme loop est probablement pas optimisé jsp
     app.ticker.add(() => {
       projectile.y -= 10;
-        
-        
+      for (const ennemi of ennemis){
+        if (isCollidingtir(projectile, ennemi)){
+          ennemis.splice()
+          projectile.destroy();
+        } 
+      }
+
     });
   }
 
@@ -227,10 +261,30 @@ function getCustomBounds(sprite) {
 
 
     return (
-      bounds1.x + 25 < bounds2.x + bounds2.width &&
-      bounds1.x - 25 + bounds1.width > bounds2.x &&
-      bounds1.y + 40 < bounds2.y + bounds2.height &&
-      bounds1.y - 40 + bounds1.height > bounds2.y
+      bounds1.x + 30 < bounds2.x + bounds2.width &&
+      bounds1.x - 30 + bounds1.width > bounds2.x &&
+      bounds1.y + 45 < bounds2.y + bounds2.height &&
+      bounds1.y - 45 + bounds1.height > bounds2.y
+    );
+  }
+
+
+
+
+
+
+
+
+    function isCollidingtir(sprite1, sprite2) {
+    const bounds1 = sprite1.getBounds();
+    const bounds2 = sprite2.getBounds();
+
+
+    return (
+      bounds1.x < bounds2.x + bounds2.width &&
+      bounds1.x + bounds1.width > bounds2.x &&
+      bounds1.y < bounds2.y + bounds2.height &&
+      bounds1.y + bounds1.height > bounds2.y
     );
   }
 
