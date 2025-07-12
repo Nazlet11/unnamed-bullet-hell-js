@@ -1,4 +1,4 @@
-import { Application, Assets, Sprite, Text, TextStyle } from 'pixi.js';
+import { Application, Assets, Sprite, Text, TextStyle, Bounds, Matrix} from 'pixi.js';
 import {initDevtools} from '@pixi/devtools';
 
 
@@ -9,18 +9,7 @@ document.body.style.display = 'flex';
 document.body.style.justifyContent = 'center';
 document.body.style.alignItems = 'center';
  
-(async () =>
-{
-
-/*
-  function createPlayerSheet(){
-    let sheet = new PIXI.BaseTexture.from(app.loader.resources["bunny"].url);
-    let w = 16;
-    let h = 16;
-
-
-  }
-  */
+(async () => {
 
     // Create a new application
     const app = new Application();
@@ -52,6 +41,9 @@ document.body.style.alignItems = 'center';
     ///sprite.height = 400;
     ///sprite.scale.set(1, 1);
 
+    // Cree l objet bounds
+    const bounds = new Bounds();
+
     // Met le centre de rotation au centre du sprite juste parce que
     mc.anchor.set(0.5);
     // Placement de base du joueur
@@ -77,10 +69,6 @@ document.body.style.alignItems = 'center';
     const text = new Text({
     text: 'score : ',
 });
-
-
-
-
 
 
   // detecte les touches pressées
@@ -162,12 +150,17 @@ document.body.style.alignItems = 'center';
       mc.x += speed;
     }
 
-    
+    // detecte la collision entre joueur et ennemi
+    if (isColliding(mc, ennemi1)) {
+      console.log("Collision détectée !");
+      mc.destroy();
+    }
 
     // lance les projectiles si on presse k
     if (keys['k']) {
       tir();
     }
+
   });
 
 
@@ -186,38 +179,60 @@ document.body.style.alignItems = 'center';
 
   
 
-    ////////////////////// Si ce commentaire est tjrs la c est que j ai pas encore geré la suppressions des projectiles parce que il restent indefiniment la dc gros sac confirmed
+  ////////////////////// Si ce commentaire est tjrs la c est que j ai pas encore geré la suppressions des projectiles parce que il restent indefiniment la dc gros sac confirmed
 
-    // j'ai pas reussi a faire un wait(); comme dans python ou jsp parce que tt est en async ou juste cc parce que c'est du javascript jsp dc
-    // ce que je vais faire c'est faire un if le temps depuis le dernier tir est au dessus du cooldown la on tire
+  // j'ai pas reussi a faire un wait(); comme dans python ou jsp parce que tt est en async ou juste cc parce que c'est du javascript jsp dc
+  // ce que je vais faire c'est faire un if le temps depuis le dernier tir est au dessus du cooldown la on tire
 
-    // unix time stamp depuis le dernier tir
-    let depuisderniertir = 0;
-    // cooldown entre chaquetir
-    let cooldown = 120;
+  // unix time stamp depuis le dernier tir
+  let depuisderniertir = 0;
+  // cooldown entre chaquetir
+  let cooldown = 120;
 
-    async function tir(){
+  async function tir(){
       
-      // temps en unix de "mtn"
-      const mtn = Date.now();
+    // temps en unix de "mtn"
+    const mtn = Date.now();
 
-      // (unix time stamp de mtn - unix time stamp du dernier tir < cooldown)
-      if (mtn - depuisderniertir < cooldown) return; // si trop tot sort de la fonction
-      depuisderniertir = mtn; // sinon, on enregistre le moment du tir
+    // (unix time stamp de mtn - unix time stamp du dernier tir < cooldown)
+    if (mtn - depuisderniertir < cooldown) return; // si trop tot sort de la fonction
+    depuisderniertir = mtn; // sinon, on enregistre le moment du tir
       
-      // crée un nv sprite
-      const projectile = new Sprite(textureprojectile);
-      // place les projectiles au dessus du perso
-      projectile.x = mc.x - 15;
-      projectile.y = mc.y - 55;
-      // l applique au truc
-      app.stage.addChild(projectile);
+    // crée un nv sprite
+    const projectile = new Sprite(textureprojectile);
+    // place les projectiles au dessus du perso
+    projectile.x = mc.x - 15;
+    projectile.y = mc.y - 55;
+    // l applique au truc
+    app.stage.addChild(projectile);
 
-      // faire une deuxieme loop est probablement pas optimisé jsp
-      app.ticker.add(() => {
-        projectile.y -= 10;
-
+    // faire une deuxieme loop est probablement pas optimisé jsp
+    app.ticker.add(() => {
+      projectile.y -= 10;
         
-      });
-    }
+        
+    });
+  }
+
+/*
+function getCustomBounds(sprite) {
+  return new PIXI.Rectangle(sprite.x + 100, sprite.y + 100, 40, 40);
+};
+*/
+
+
+  function isColliding(sprite1, sprite2) {
+    const bounds1 = sprite1.getBounds();
+    const bounds2 = sprite2.getBounds();
+
+
+    return (
+      bounds1.x + 25 < bounds2.x + bounds2.width &&
+      bounds1.x - 25 + bounds1.width > bounds2.x &&
+      bounds1.y + 40 < bounds2.y + bounds2.height &&
+      bounds1.y - 40 + bounds1.height > bounds2.y
+    );
+  }
+
+
 })();
