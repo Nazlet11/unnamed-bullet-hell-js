@@ -10,7 +10,6 @@ document.body.style.justifyContent = 'center';
 document.body.style.alignItems = 'center';
  
 (async () => {
-
     // Create a new application
     const app = new Application();
 
@@ -19,7 +18,12 @@ document.body.style.alignItems = 'center';
       width: 670,
       height: 880,
       resolution: 1
-});
+    });
+
+
+
+
+
 
     // Dev tools pr chrome
     initDevtools({app});
@@ -46,6 +50,7 @@ document.body.style.alignItems = 'center';
 
     // creation du tableau des ennemis
     let ennemis = [];
+    let projectiles = [];
 
     
 
@@ -54,9 +59,6 @@ document.body.style.alignItems = 'center';
     // Placement de base du joueur
     mc.x = app.screen.width / 2;
     mc.y = app.screen.height * 0.72;
-    // ennemi test
-    ennemi1.x = app.screen.width / 2;
-    ennemi1.y = app.screen.height / 4;
 
     // vitesse 
     let speed = 1.70;
@@ -65,18 +67,121 @@ document.body.style.alignItems = 'center';
     // tableau keys
     const keys = {};
 
+
+
+
     // Texte 
     const style = new TextStyle({
       fill: 0xfccccc,
       fontSize: 72,
     });
+
     // initialisation du texte
     const text = new Text({
     text: 'score : ',
-});
+    });
+
+
+
+
+  
+  ////////////////////// Faut aussi faire en sorte que le perso puisse pas sortir de l'écran
+
+
+
+
+
+  //// Fonction tirt
+
+  // j'ai pas reussi a faire un wait(); comme dans python ou jsp parce que tt est en async ou juste cc parce que c'est du javascript jsp dc
+  // ce que je vais faire c'est faire un if le temps depuis le dernier tir est au dessus du cooldown la on tire
+
+  // unix time stamp depuis le dernier tir
+  let depuisderniertir = 0;
+  // cooldown entre chaquetir
+  let cooldown = 120;
+
+  async function tir(){
+      
+    // temps en unix de "mtn"
+    const mtn = Date.now();
+
+    // (unix time stamp de mtn - unix time stamp du dernier tir < cooldown)
+    if (mtn - depuisderniertir < cooldown) return; // si trop tot sort de la fonction
+    depuisderniertir = mtn; // sinon, on enregistre le moment du tir
+    
+    // crée un nv sprite
+    const projectile = new Sprite(textureprojectile);
+    // place les projectiles au dessus du perso
+    projectile.x = mc.x - 15;
+    projectile.y = mc.y - 55;
+    // l applique au truc
+
+
+    
+
+    app.stage.addChild(projectile);
+    projectiles.push(projectile);
+  }
+
+
+
+
+
+
+  
+  //// Fonction collision pour joueur
+
+  function isColliding(sprite1, sprite2) {
+    const bounds1 = sprite1.getBounds();
+    const bounds2 = sprite2.getBounds();
+
+
+    return (
+      bounds1.x + 30 < bounds2.x + bounds2.width &&
+      bounds1.x - 30 + bounds1.width > bounds2.x &&
+      bounds1.y + 45 < bounds2.y + bounds2.height &&
+      bounds1.y - 45 + bounds1.height > bounds2.y
+    );
+  }
+
+  //// Fonction pour collision
+
+  function isCollidingtir(sprite1, sprite2) {
+  const bounds1 = sprite1.getBounds();
+  const bounds2 = sprite2.getBounds();
+
+
+  return (
+    bounds1.x < bounds2.x + bounds2.width &&
+    bounds1.x + bounds1.width > bounds2.x &&
+    bounds1.y < bounds2.y + bounds2.height &&
+    bounds1.y + bounds1.height > bounds2.y
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
   // detecte les touches pressées
+
   window.addEventListener('keydown', (e) => {
     const key = e.key.toLowerCase();
     keys[key] = true;
@@ -85,9 +190,22 @@ document.body.style.alignItems = 'center';
       speed = 1.1;
     }
 
+    if (key === 't') {
+      for (let i = 0; i < 15; i++) {
+        const ennemitest = new Sprite(textureennemi1);
+        ennemitest.x = Math.random() * app.screen.width;
+        ennemitest.y = Math.random() * app.screen.height * 0.5;
+        app.stage.addChild(ennemitest);
+       ennemis.push(ennemitest);
+      }
+    }
+
+
+
   });
 
   // detecte les touches relachées
+
   window.addEventListener('keyup', (e) => {
     const key = e.key.toLowerCase();
     keys[key] = false;
@@ -96,7 +214,11 @@ document.body.style.alignItems = 'center';
       speed = 1.70;
     }
 
+
   });
+
+
+
 
 
 
@@ -105,13 +227,26 @@ document.body.style.alignItems = 'center';
     app.stage.addChild(ennemi1);
 
 
-    for (let i = 0; i < 15; i++) {
-      const ennemi = new Sprite(textureennemi1);
-      ennemi.x = Math.random() * app.screen.width;
-      ennemi.y = Math.random() * app.screen.height * 0.5;
-      app.stage.addChild(ennemi);
-      ennemis.push(ennemi);
-    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -123,6 +258,7 @@ document.body.style.alignItems = 'center';
 
 
     // la game loop cogno
+
     app.ticker.add((time) =>
     {
 
@@ -172,6 +308,10 @@ document.body.style.alignItems = 'center';
       mc.x += speed;
     }
 
+
+        
+
+
     // detecte la collision entre joueur et ennemi
 
 
@@ -184,109 +324,54 @@ document.body.style.alignItems = 'center';
     }
 
 
+
     // lance les projectiles si on presse k
     if (keys['k']) {
       tir();
-    }
-
-  });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-  
-  ////////////////////// Si ce commentaire est tjrs la c est que j ai pas encore geré la suppressions des projectiles parce que il restent indefiniment la dc gros sac confirmed
-  ////////////////////// Faut aussi faire en sorte que le perso puisse pas sortir de l'écran
-
-  // j'ai pas reussi a faire un wait(); comme dans python ou jsp parce que tt est en async ou juste cc parce que c'est du javascript jsp dc
-  // ce que je vais faire c'est faire un if le temps depuis le dernier tir est au dessus du cooldown la on tire
-
-  // unix time stamp depuis le dernier tir
-  let depuisderniertir = 0;
-  // cooldown entre chaquetir
-  let cooldown = 120;
-
-  async function tir(){
       
-    // temps en unix de "mtn"
-    const mtn = Date.now();
-
-    // (unix time stamp de mtn - unix time stamp du dernier tir < cooldown)
-    if (mtn - depuisderniertir < cooldown) return; // si trop tot sort de la fonction
-    depuisderniertir = mtn; // sinon, on enregistre le moment du tir
-      
-    // crée un nv sprite
-    const projectile = new Sprite(textureprojectile);
-    // place les projectiles au dessus du perso
-    projectile.x = mc.x - 15;
-    projectile.y = mc.y - 55;
-    // l applique au truc
-    app.stage.addChild(projectile);
-
-    // faire une deuxieme loop est probablement pas optimisé jsp
-    app.ticker.add(() => {
-      projectile.y -= 10;
       for (const ennemi of ennemis){
         if (isCollidingtir(projectile, ennemi)){
-          ennemis.splice()
-          projectile.destroy();
+          app.stage.removeChild(ennemi);
+          pp.stage.removeChild(projectile);
         } 
+      } 
+    }
+
+
+
+
+
+
+
+
+    
+    for (let i = projectiles.length - 1; i >= 0; i--) {
+    const proj = projectiles[i];
+    proj.y -= 10;
+
+      // supprime s'il sort de l'écran
+      if (proj.y < 0) {
+        app.stage.removeChild(proj);
+        projectiles.splice(i, 1);
+      continue;
+    }
+
+      // verifie collision avec ennemis
+      for (let j = ennemis.length - 1; j >= 0; j--) {
+        const ennemi = ennemis[j];
+        if (isCollidingtir(proj, ennemi)) {
+          app.stage.removeChild(proj);
+          projectiles.splice(i, 1);
+
+          app.stage.removeChild(ennemi);
+          ennemis.splice(j, 1);
+
+          break; // sort de la boucle ennemis
+        }
       }
+    }
+  });
 
-    });
-  }
-
-/*
-function getCustomBounds(sprite) {
-  return new PIXI.Rectangle(sprite.x + 100, sprite.y + 100, 40, 40);
-};
-*/
-
-
-  function isColliding(sprite1, sprite2) {
-    const bounds1 = sprite1.getBounds();
-    const bounds2 = sprite2.getBounds();
-
-
-    return (
-      bounds1.x + 30 < bounds2.x + bounds2.width &&
-      bounds1.x - 30 + bounds1.width > bounds2.x &&
-      bounds1.y + 45 < bounds2.y + bounds2.height &&
-      bounds1.y - 45 + bounds1.height > bounds2.y
-    );
-  }
-
-
-
-
-
-
-
-
-    function isCollidingtir(sprite1, sprite2) {
-    const bounds1 = sprite1.getBounds();
-    const bounds2 = sprite2.getBounds();
-
-
-    return (
-      bounds1.x < bounds2.x + bounds2.width &&
-      bounds1.x + bounds1.width > bounds2.x &&
-      bounds1.y < bounds2.y + bounds2.height &&
-      bounds1.y + bounds1.height > bounds2.y
-    );
-  }
 
 
 })();
