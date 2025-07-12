@@ -69,6 +69,8 @@ document.body.style.alignItems = 'center';
     let speed = 1.70;
     let diagonalSpeed = speed / Math.sqrt(2);
     let diagonalSpeedslow
+    let score = 0;
+    let upgradecount = 0;
     // tableau keys
     const keys = {};
 
@@ -83,8 +85,9 @@ document.body.style.alignItems = 'center';
 
     // initialisation du texte
     const text = new Text({
-    text: 'score : ',
+    text: 'score : ' + score,
     });
+
 
 
 
@@ -168,7 +171,7 @@ document.body.style.alignItems = 'center';
 
 
   //// Fonction pour drop xp 
-  function dropxp(coord1, coord2){
+  function dropXp(coord1, coord2){
     const xpe = new Sprite(texturexp);
       
 
@@ -176,17 +179,28 @@ document.body.style.alignItems = 'center';
       xpe.y = coord2;
 
       
-      
+      getGrosxpodd(xpe);
 
       app.stage.addChild(xpe);
       xps.push(xpe);
+
+
   }
 
 
-
-  function coordxp(){
-
+  //// Fonction pour incrementer le score
+  function getGrosxpodd(sprite) {
+    let grosxp = Math.floor(Math.random() * 2);
+    if(grosxp === 1) {
+      sprite.scale.set(2, 2);
+    } 
   }
+
+  function giveScore(sprite){
+    if (sprite.width === 32) score += 30;
+    score += 20;
+  }
+
 
 
 
@@ -283,11 +297,8 @@ document.body.style.alignItems = 'center';
 
     app.ticker.add((time) =>
     {
-
-    // if (keys['q']) mc.x -= speed;    // Gauche
-    // if (keys['d']) mc.x += speed;    // Droite
-    // if (keys['z']) mc.y -= speed;    // Haut
-    // if (keys['s']) mc.y += speed;    // Bas
+      
+      text.text = 'score : ' + score;
 
     // fix diagonal haut gauche
     if (keys['z'] && keys['q']) {
@@ -366,7 +377,7 @@ document.body.style.alignItems = 'center';
       for (let j = ennemis.length - 1; j >= 0; j--) {
         const ennemi = ennemis[j];
         if (isCollidingtir(proj, ennemi)) {
-          dropxp(ennemi.x, ennemi.y);
+          dropXp(ennemi.x, ennemi.y);
 
           app.stage.removeChild(proj);
           projectiles.splice(i, 1);
@@ -384,6 +395,7 @@ document.body.style.alignItems = 'center';
       xp.y += 0.5; 
 
       if (isCollidingtir(mc, xp)) {
+        giveScore(xp);
         app.stage.removeChild(xp);
         xps.splice(k, 1);
       }
