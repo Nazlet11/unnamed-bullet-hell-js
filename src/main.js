@@ -36,11 +36,15 @@ document.body.style.alignItems = 'center';
     const texturemc = await Assets.load('/public/perso/TEST.png');
     const textureprojectile = await Assets.load('/public/trucs/projectile.png');
     const textureennemi1 = await Assets.load('/public/ennemi/stage1/ennemi1.png');
+    const texturexp = await Assets.load('/public/trucs/XP.png');
+    
 
     // cree les sprites 
     const mc = new Sprite(texturemc);
     const projectile = new Sprite(textureprojectile);
     const ennemi1 = new Sprite(textureennemi1);
+    const xp = new Sprite(texturexp);
+
     ///sprite.width = 200;
     ///sprite.height = 400;
     ///sprite.scale.set(1, 1);
@@ -51,6 +55,7 @@ document.body.style.alignItems = 'center';
     // creation du tableau des ennemis
     let ennemis = [];
     let projectiles = [];
+    let xps = [];
 
     
 
@@ -153,18 +158,35 @@ document.body.style.alignItems = 'center';
 
 
   return (
-    bounds1.x < bounds2.x + bounds2.width &&
-    bounds1.x + bounds1.width > bounds2.x &&
-    bounds1.y < bounds2.y + bounds2.height &&
-    bounds1.y + bounds1.height > bounds2.y
+    bounds1.x + 10< bounds2.x + bounds2.width &&
+    bounds1.x - 10+ bounds1.width > bounds2.x &&
+    bounds1.y + 15< bounds2.y + bounds2.height &&
+    bounds1.y - 15+ bounds1.height > bounds2.y
   );
 }
 
 
 
+  //// Fonction pour drop xp 
+  function dropxp(coord1, coord2){
+    const xpe = new Sprite(texturexp);
+      
+
+      xpe.x = coord1;
+      xpe.y = coord2;
+
+      
+      
+
+      app.stage.addChild(xpe);
+      xps.push(xpe);
+  }
 
 
 
+  function coordxp(){
+
+  }
 
 
 
@@ -187,7 +209,7 @@ document.body.style.alignItems = 'center';
     keys[key] = true;
     // ralentit si on presse latouche j
     if (key === 'j') {
-      speed = 1.1;
+      speed = 0.85;
     }
 
     if (key === 't') {
@@ -224,7 +246,6 @@ document.body.style.alignItems = 'center';
 
     app.stage.addChild(text);
     app.stage.addChild(mc);
-    app.stage.addChild(ennemi1);
 
 
 
@@ -245,6 +266,7 @@ document.body.style.alignItems = 'center';
 
 
 
+  
 
 
 
@@ -309,42 +331,26 @@ document.body.style.alignItems = 'center';
     }
 
 
-        
 
-
-    // detecte la collision entre joueur et ennemi
-
-
-    // detecte la collision entre ennemi et joueur
-    for (const ennemi of ennemis){
-      if (isColliding(mc, ennemi)) {
-        console.log("Collision détectée !");
-        ennemi.destroy();
-      }
-    }
 
 
 
     // lance les projectiles si on presse k
     if (keys['k']) {
       tir();
-      
-      for (const ennemi of ennemis){
-        if (isCollidingtir(projectile, ennemi)){
-          app.stage.removeChild(ennemi);
-          pp.stage.removeChild(projectile);
-        } 
-      } 
     }
 
 
+    // detecte la collision entre ennemi et joueur
+    for (const ennemi of ennemis){
+      if (isColliding(mc, ennemi)) {
+        ennemi.destroy();
+      }
+    }
 
 
+    // boucle pr chaque projectiles et les fait descendre
 
-
-
-
-    
     for (let i = projectiles.length - 1; i >= 0; i--) {
     const proj = projectiles[i];
     proj.y -= 10;
@@ -354,22 +360,39 @@ document.body.style.alignItems = 'center';
         app.stage.removeChild(proj);
         projectiles.splice(i, 1);
       continue;
-    }
+      }
 
       // verifie collision avec ennemis
       for (let j = ennemis.length - 1; j >= 0; j--) {
         const ennemi = ennemis[j];
         if (isCollidingtir(proj, ennemi)) {
+          dropxp(ennemi.x, ennemi.y);
+
           app.stage.removeChild(proj);
           projectiles.splice(i, 1);
 
           app.stage.removeChild(ennemi);
           ennemis.splice(j, 1);
-
           break; // sort de la boucle ennemis
         }
       }
     }
+
+    // boucle pr fait descendre  xp et gerer collision
+    for (let k = xps.length - 1; k >= 0; k--) {
+      const xp = xps[k];
+      xp.y += 0.5; 
+
+      if (isCollidingtir(mc, xp)) {
+        app.stage.removeChild(xp);
+        xps.splice(k, 1);
+      }
+    }
+
+
+
+
+
   });
 
 
