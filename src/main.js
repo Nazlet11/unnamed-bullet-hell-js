@@ -21,7 +21,7 @@ document.body.style.alignItems = 'center';
     });
 
 
-
+    // j ai le gyatt j ai le gyatt j ai le gyatt
 
 
 
@@ -67,10 +67,12 @@ document.body.style.alignItems = 'center';
 
     // vitesse 
     let speed = 1.70;
-    let diagonalSpeed = speed / Math.sqrt(2);
-    let diagonalSpeedslow
+    let diagonalSpeed = speed / Math.sqrt(2); //  1.2020815280171306
+    let diagonalSpeedslow = 0.601040764;
     let score = 0;
-    let upgradecount = 0;
+    let killcount = 0;
+    // nombre de kills pour savoir si on ameliore l'attaque paprce que ce sera decidé par le nombre de kill
+    let killcount_upgrade = 0;
     // tableau keys
     const keys = {};
 
@@ -99,18 +101,35 @@ document.body.style.alignItems = 'center';
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   //// Fonction tirt
 
   // j'ai pas reussi a faire un wait(); comme dans python ou jsp parce que tt est en async ou juste cc parce que c'est du javascript jsp dc
-  // ce que je vais faire c'est faire un if le temps depuis le dernier tir est au dessus du cooldown la on tire
+  // dc jvais faire un if le temps depuis le dernier tir est au dessus du cooldown la on tire
 
   // unix time stamp depuis le dernier tir
   let depuisderniertir = 0;
-  // cooldown entre chaquetir
+  // cooldown entre chaquetir en ms
   let cooldown = 120;
 
   async function tir(){
-      
+
     // temps en unix de "mtn"
     const mtn = Date.now();
 
@@ -136,6 +155,26 @@ document.body.style.alignItems = 'center';
 
 
 
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
 
   
   //// Fonction collision pour joueur
@@ -203,13 +242,65 @@ document.body.style.alignItems = 'center';
 
 
 
+  //// Fonctions pour marcher dans chaque direction
+  //laisse tomber ca c est du spaghetti code admire
+
+  // fix diagonal haut gauche
+  function marcheGauche(){
+    if (keys['z'] && keys['q']) {
+      mc.x -= diagonalSpeed;
+      mc.y -= diagonalSpeed;
+    } else if (keys['q']) {     
+      mc.x -= speed;
+    } else if (keys['z']) {
+      mc.y -= speed;
+    }
+  }
+
+  // fix diagonal haut droit
+  function marcheHaut(){
+    if (keys['z'] && keys['d']) {
+      mc.x += diagonalSpeed;
+      mc.y -= diagonalSpeed;
+    } else if (keys['d']) {
+      mc.x += speed;
+    } else if (keys['z']) {
+      mc.y -= speed;
+    }
+  }
+
+  // fix diagonal bas gauche
+  function marcheBas(){
+    if (keys['s'] && keys['q']) {
+      mc.y += diagonalSpeed;
+      mc.x -= diagonalSpeed;
+    } else if (keys['s']) {
+      mc.y += speed
+    } else if (keys['q']) {
+      mc.x -= speed;
+    }
+  }
+
+
+  // fix diagonal bas droit
+  function marcheDroit(){
+    if (keys['s'] && keys['d']) {
+      mc.y += diagonalSpeed;
+      mc.x += diagonalSpeed;
+    } else if (keys['s']) {
+      mc.y += speed
+    } else if (keys['d']) {
+      mc.x += speed;
+    }
+  }
 
 
 
-
-
-
-
+  //// Fonction pour determiner si on upgrade le shoot
+  //jvais le mettre ds la fonction tir nn enft laisse tomber
+  function upgradeShoot(nombredekill){
+    if (nombredekill >= 10) return true;
+  }
 
 
 
@@ -224,6 +315,7 @@ document.body.style.alignItems = 'center';
     // ralentit si on presse latouche j
     if (key === 'j') {
       speed = 0.85;
+      diagonalSpeed = diagonalSpeedslow;
     }
 
     if (key === 't') {
@@ -248,6 +340,7 @@ document.body.style.alignItems = 'center';
     // relache j
     if (key === 'j') {
       speed = 1.70;
+      diagonalSpeed = 1.2020815280171306
     }
 
 
@@ -297,49 +390,20 @@ document.body.style.alignItems = 'center';
 
     app.ticker.add((time) =>
     {
-      
       text.text = 'score : ' + score;
 
-    // fix diagonal haut gauche
-    if (keys['z'] && keys['q']) {
-      mc.x -= diagonalSpeed;
-      mc.y -= diagonalSpeed;
-    } else if (keys['q']) {     
-      mc.x -= speed;
-    } else if (keys['z']) {
-      mc.y -= speed;
-    }
 
-    // fix diagonal haut droit
-    if (keys['z'] && keys['d']) {
-      mc.x += diagonalSpeed;
-      mc.y -= diagonalSpeed;
-    } else if (keys['d']) {
-      mc.x += speed;
-    } else if (keys['z']) {
-      mc.y -= speed;
-    }
 
-    
-    // fix diagonal bas gauche
-    if (keys['s'] && keys['q']) {
-      mc.y += diagonalSpeed;
-      mc.x -= diagonalSpeed;
-    } else if (keys['s']) {
-      mc.y += speed
-    } else if (keys['q']) {
-      mc.x -= speed;
-    }
 
-    // fix diagonal bas droit
-    if (keys['s'] && keys['d']) {
-      mc.y += diagonalSpeed;
-      mc.x += diagonalSpeed;
-    } else if (keys['s']) {
-      mc.y += speed
-    } else if (keys['d']) {
-      mc.x += speed;
-    }
+
+      marcheGauche();
+      marcheHaut();
+      marcheBas();
+      marcheDroit();
+          
+
+
+
 
 
 
@@ -349,6 +413,12 @@ document.body.style.alignItems = 'center';
     // lance les projectiles si on presse k
     if (keys['k']) {
       tir();
+
+      if (upgradeShoot(killcount_upgrade)) {
+        cooldown = 60;
+        tir();
+      }
+
     }
 
 
@@ -378,6 +448,7 @@ document.body.style.alignItems = 'center';
         const ennemi = ennemis[j];
         if (isCollidingtir(proj, ennemi)) {
           dropXp(ennemi.x, ennemi.y);
+          killcount_upgrade += 1;
 
           app.stage.removeChild(proj);
           projectiles.splice(i, 1);
