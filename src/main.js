@@ -71,7 +71,7 @@ document.body.style.alignItems = 'center';
     let diagonalSpeedslow = 0.601040764;
     let score = 0;
     let killcount = 0;
-    // nombre de kills pour savoir si on ameliore l'attaque paprce que ce sera decidé par le nombre de kill
+    // nombre de kills pour savoir si on ameliore l'attaque paprce que ce sera decidé par le nombre de kill et qui se reset qd on prend un coup
     let killcount_upgrade = 0;
     // tableau keys
     const keys = {};
@@ -101,23 +101,6 @@ document.body.style.alignItems = 'center';
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   //// Fonction tirt
 
   // j'ai pas reussi a faire un wait(); comme dans python ou jsp parce que tt est en async ou juste cc parce que c'est du javascript jsp dc
@@ -128,7 +111,12 @@ document.body.style.alignItems = 'center';
   // cooldown entre chaquetir en ms
   let cooldown = 120;
 
-  async function tir(){
+
+
+
+
+  // on rentre en parametre la position des tir ou ils commencent
+  async function tir(x, y){
 
     // temps en unix de "mtn"
     const mtn = Date.now();
@@ -139,9 +127,10 @@ document.body.style.alignItems = 'center';
     
     // crée un nv sprite
     const projectile = new Sprite(textureprojectile);
+
     // place les projectiles au dessus du perso
-    projectile.x = mc.x - 15;
-    projectile.y = mc.y - 55;
+    projectile.x = x;
+    projectile.y = y;
     // l applique au truc
 
 
@@ -157,24 +146,6 @@ document.body.style.alignItems = 'center';
 
   
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
 
   
   //// Fonction collision pour joueur
@@ -231,12 +202,13 @@ document.body.style.alignItems = 'center';
   function getGrosxpodd(sprite) {
     let grosxp = Math.floor(Math.random() * 2);
     if(grosxp === 1) {
-      sprite.scale.set(2, 2);
+      sprite.scale.set(1.70, 1.70);
     } 
   }
 
   function giveScore(sprite){
-    if (sprite.width === 32) score += 30;
+    let taillegros = 16 * 1.70;
+    if (sprite.width === taillegros) score += 30;
     score += 20;
   }
 
@@ -298,8 +270,10 @@ document.body.style.alignItems = 'center';
 
   //// Fonction pour determiner si on upgrade le shoot
   //jvais le mettre ds la fonction tir nn enft laisse tomber
-  function upgradeShoot(nombredekill){
-    if (nombredekill >= 10) return true;
+  function getUpgradestate(nombredekill){
+    if (nombredekill < 10) return "1";
+    if (nombredekill >= 10 && nombredekill < 30) return "2";
+    if (nombredekill > 30) return "3";
   }
 
 
@@ -412,13 +386,26 @@ document.body.style.alignItems = 'center';
 
     // lance les projectiles si on presse k
     if (keys['k']) {
-      tir();
+        // coordonnee de ou ca tire
+        let tircoord_x = mc.x - 15;
+        let tircoord_y = mc.y - 55;
 
-      if (upgradeShoot(killcount_upgrade)) {
-        cooldown = 60;
-        tir();
+      switch (getUpgradestate(killcount_upgrade)) {
+        case "1":
+          tir(tircoord_x, tircoord_y);
+          break;
+        case "2":
+          cooldown = 60;
+          tir(tircoord_x, tircoord_y - 100);
+          tir(tircoord_x, tircoord_y + 100);
+          break;
+        case "3":
+          cooldown = 50;
+          tir(tircoord_x, tircoord_y);
+          break;
+        default:
+          tir(tircoord_x, tircoord_y);
       }
-
     }
 
 
