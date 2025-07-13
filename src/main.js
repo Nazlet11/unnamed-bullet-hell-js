@@ -94,6 +94,17 @@ document.body.style.alignItems = 'center';
 
 
 
+
+  //// Fonction wait 
+  //promise
+  function promise(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+  async function wait(ms) {
+    await promise(ms); 
+  }
+
+
   
   ////////////////////// Faut aussi faire en sorte que le perso puisse pas sortir de l'écran
 
@@ -106,17 +117,22 @@ document.body.style.alignItems = 'center';
   // j'ai pas reussi a faire un wait(); comme dans python ou jsp parce que tt est en async ou juste cc parce que c'est du javascript jsp dc
   // dc jvais faire un if le temps depuis le dernier tir est au dessus du cooldown la on tire
 
+
+
+
+
+
   // unix time stamp depuis le dernier tir
   let depuisderniertir = 0;
   // cooldown entre chaquetir en ms
   let cooldown = 120;
-
+  
 
 
 
 
   // on rentre en parametre la position des tir ou ils commencent
-  async function tir(x, y){
+  function tir(x, y){
 
     // temps en unix de "mtn"
     const mtn = Date.now();
@@ -140,6 +156,44 @@ document.body.style.alignItems = 'center';
     projectiles.push(projectile);
   }
 
+
+
+
+  function tirDouble(x, y){
+
+    // temps en unix de "mtn"
+    const mtn = Date.now();
+
+    // (unix time stamp de mtn - unix time stamp du dernier tir < cooldown)
+    if (mtn - depuisderniertir < cooldown) return; // si trop tot sort de la fonction
+    depuisderniertir = mtn; // sinon, on enregistre le moment du tir
+    
+
+
+
+
+
+    // crée un nv sprite
+    const projectileDroit = new Sprite(textureprojectile);
+
+    // place les projectiles au dessus du perso
+    projectileDroit.x = x + 20;
+    projectileDroit.y = y;
+    // l applique au truc
+
+    app.stage.addChild(projectileDroit);
+    projectiles.push(projectileDroit);
+
+    const projectileGauche = new Sprite(textureprojectile);
+
+    // place les projectiles au dessus du perso
+    projectileGauche.x = x - 20;
+    projectileGauche.y = y;
+    // l applique au truc
+
+    app.stage.addChild(projectileGauche);
+    projectiles.push(projectileGauche);
+  }
 
 
 
@@ -281,6 +335,27 @@ document.body.style.alignItems = 'center';
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // detecte les touches pressées
 
   window.addEventListener('keydown', (e) => {
@@ -346,7 +421,6 @@ document.body.style.alignItems = 'center';
 
 
 
-
   
 
 
@@ -365,7 +439,6 @@ document.body.style.alignItems = 'center';
     app.ticker.add((time) =>
     {
       text.text = 'score : ' + score;
-
 
 
 
@@ -396,12 +469,12 @@ document.body.style.alignItems = 'center';
           break;
         case "2":
           cooldown = 60;
-          tir(tircoord_x, tircoord_y - 100);
-          tir(tircoord_x, tircoord_y + 100);
+          tirDouble(tircoord_x, tircoord_y);
+
           break;
         case "3":
           cooldown = 50;
-          tir(tircoord_x, tircoord_y);
+          tirDouble(tircoord_x, tircoord_y);
           break;
         default:
           tir(tircoord_x, tircoord_y);
