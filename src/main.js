@@ -106,9 +106,10 @@ document.body.style.alignItems = 'center';
 
 
   
+
+
+
   ////////////////////// Faut aussi faire en sorte que le perso puisse pas sortir de l'écran
-
-
 
 
 
@@ -355,7 +356,6 @@ document.body.style.alignItems = 'center';
 
 
 
-
   // detecte les touches pressées
 
   window.addEventListener('keydown', (e) => {
@@ -441,12 +441,21 @@ document.body.style.alignItems = 'center';
       text.text = 'score : ' + score;
 
 
+      if (mc.y > 0 && mc.x > 0){
+        marcheGauche();
+      }
 
+      if (mc.y > 0 && mc.x < 670){
+        marcheHaut();
+      }
 
-      marcheGauche();
-      marcheHaut();
+      if (mc.y < 880 && mc.x > 0){ // sq
       marcheBas();
+      }
+
+      if (mc.y < 880 && mc.x < 670){ // sd
       marcheDroit();
+      }
           
 
 
@@ -523,7 +532,7 @@ document.body.style.alignItems = 'center';
     // boucle pr fait descendre  xp et gerer collision
     for (let k = xps.length - 1; k >= 0; k--) {
       const xp = xps[k];
-      xp.y += 0.5; 
+      xp.y += 0.75; 
 
       if (isCollidingtir(mc, xp)) {
         giveScore(xp);
