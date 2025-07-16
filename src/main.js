@@ -32,25 +32,30 @@ document.body.style.alignItems = 'center';
     // Append the application canvas to the document body
     document.body.appendChild(app.canvas);
 
-    // Load the bunny texture
-    const texturemc = await Assets.load('/public/perso/TEST.png');
-    const textureprojectile = await Assets.load('/public/trucs/projectile.png');
-    const textureennemi1 = await Assets.load('/public/ennemi/stage1/ennemi1.png');
-    const texturexp = await Assets.load('/public/trucs/XP.png');
-    
+    // Load the textures
+    await Assets.loadBundle('textures', {
+      mc: '/public/perso/TEST.png',
+      projectile: '/public/trucs/projectile.png',
+      ennemi1: '/public/ennemi/stage1/ennemi1.png',
+      xp: '/public/trucs/XP.png',
+    })
+    .catch((error) => {
+      console.error('Error loading textures:', error);
+    });
+
+    const texturemc = Assets.get('mc');
+    const textureprojectile = Assets.get('projectile');
+    const textureennemi1 = Assets.get('ennemi1');
+    const texturexp = Assets.get('xp');
+
 
     // cree les sprites 
     const mc = new Sprite(texturemc);
-    const projectile = new Sprite(textureprojectile);
-    const ennemi1 = new Sprite(textureennemi1);
-    const xp = new Sprite(texturexp);
 
     ///sprite.width = 200;
     ///sprite.height = 400;
     ///sprite.scale.set(1, 1);
 
-    // Cree l objet bounds
-    const bounds = new Bounds();
 
     // creation du tableau des ennemis
     let ennemis = [];
@@ -72,19 +77,23 @@ document.body.style.alignItems = 'center';
     const DIAGONALSPEEDSLOW = SPEEDSLOW / Math.sqrt(2); // 0.6030407640085653
     let playerSpeed = SPEED;
     let playerDiagonalSpeed = DIAGONALSPEED;
-    let score = 0;
-    let killcount = 0;
-    // nombre de kills pour savoir si on ameliore l'attaque paprce que ce sera decidé par le nombre de kill et qui se reset qd on prend un coup
-    let killcount_upgrade = 0;
-    // tableau keys
-    const keys = {};
 
+    // upgrades
+    // nombre de kills pour savoir si on ameliore l'attaque paprce que ce sera decidé par le nombre de kill et qui se reset qd on prend un coup
+    let score = 0;
+    let killcount_upgrade = 0;
+    const COOLDOWNUPDGRADE = {"1": 120, "2": 60, "3": 50};
+    const DEFAULTCOOLDOWN = COOLDOWNUPDGRADE["1"]; // Au cas ou il y ait un bug avec les updgrade
+    
+    // keys
+    const keys = {};
     const CONTROLS = {
       'up': 'z',
       'down': 's',
       'left': 'q',
       'right': 'd',
       'shoot': 'k',
+      'slow': 'j'
     }
 
 
@@ -126,61 +135,28 @@ document.body.style.alignItems = 'center';
   // cooldown entre chaquetir en ms
   let cooldown = 120;
 
+  function isTooEarly() {
+    // temps en unix de "mtn"
+    const mtn = Date.now();
+    // (unix time stamp de mtn - unix time stamp du dernier tir < cooldown)
+    if (mtn - depuisderniertir < cooldown) return true; // si trop tot sort de la fonction
+    return false;
+  }
+
   // on rentre en parametre la position des tir ou ils commencent
-  function tir(x, y){
+  function tirMultiple(x, y, offsets=[0]) {
+    if (isTooEarly()) return; // si trop tot sort de la fonction
 
-    // temps en unix de "mtn"
-    const mtn = Date.now();
+    for (const offset of offsets) {
+      const projectile = new Sprite(textureprojectile);
+      projectile.x = x + offset;
+      projectile.y = y;
 
-    // (unix time stamp de mtn - unix time stamp du dernier tir < cooldown)
-    if (mtn - depuisderniertir < cooldown) return; // si trop tot sort de la fonction
-    depuisderniertir = mtn; // sinon, on enregistre le moment du tir
-    
-    // crée un nv sprite
-    const projectile = new Sprite(textureprojectile);
-
-    // place les projectiles au dessus du perso
-    projectile.x = x;
-    projectile.y = y;
-    // l applique au truc
-
-    app.stage.addChild(projectile);
-    projectiles.push(projectile);
+      app.stage.addChild(projectile);
+      projectiles.push(projectile);
+    }
   }
 
-
-
-
-  function tirDouble(x, y){
-
-    // temps en unix de "mtn"
-    const mtn = Date.now();
-
-    // (unix time stamp de mtn - unix time stamp du dernier tir < cooldown)
-    if (mtn - depuisderniertir < cooldown) return; // si trop tot sort de la fonction
-    depuisderniertir = mtn; // sinon, on enregistre le moment du tir
-
-    // crée un nv sprite
-    const projectileDroit = new Sprite(textureprojectile);
-
-    // place les projectiles au dessus du perso
-    projectileDroit.x = x + 20;
-    projectileDroit.y = y;
-    // l applique au truc
-
-    app.stage.addChild(projectileDroit);
-    projectiles.push(projectileDroit);
-
-    const projectileGauche = new Sprite(textureprojectile);
-
-    // place les projectiles au dessus du perso
-    projectileGauche.x = x - 20;
-    projectileGauche.y = y;
-    // l applique au truc
-
-    app.stage.addChild(projectileGauche);
-    projectiles.push(projectileGauche);
-  }
 
 
   //// Fonction collision pour joueur
@@ -189,7 +165,7 @@ document.body.style.alignItems = 'center';
     const bounds1 = sprite1.getBounds();
     const bounds2 = sprite2.getBounds();
     // Ajuste les bords du sprite1 pour la collision
-    const squaredDist = (bounds1.x + bounds2.x) ** 2 + (bounds1.y + bounds2.y) ** 2;
+    const squaredDist = (bounds1.x - bounds2.x) ** 2 + (bounds1.y - bounds2.y) ** 2;
     bounds1.radius = Math.max(bounds1.width, bounds1.height) / 2 - shrinkAmount;
     bounds2.radius = Math.max(bounds2.width, bounds2.height) / 2 - shrinkAmount;
     return (squaredDist < (bounds1.radius + bounds2.radius) ** 2);
@@ -233,7 +209,7 @@ document.body.style.alignItems = 'center';
   //laisse tomber ca c est du spaghetti code admire
 
   function movement(keys, controls, playerSpeed, playerDiagonalSpeed) {
-    mov = { x: 0, y: 0 };
+    let mov = { x: 0, y: 0 };
     if (keys[controls['up']]) {
       mov.y -= playerSpeed;
     }
@@ -284,11 +260,6 @@ document.body.style.alignItems = 'center';
   window.addEventListener('keydown', (e) => {
     const key = e.key.toLowerCase();
     keys[key] = true;
-    // ralentit si on presse latouche j
-    if (key === 'j') {
-      playerSpeed = SPEEDSLOW;
-      playerDiagonalSpeed = DIAGONALSPEEDSLOW;
-    }
 
     if (key === 't') {
       for (let i = 0; i < 15; i++) {
@@ -309,11 +280,6 @@ document.body.style.alignItems = 'center';
   window.addEventListener('keyup', (e) => {
     const key = e.key.toLowerCase();
     keys[key] = false;
-    // relache j
-    if (key === 'j') {
-      playerSpeed = SPEED;
-      playerDiagonalSpeed = DIAGONALSPEED;
-    }
 
 
   });
@@ -327,36 +293,41 @@ document.body.style.alignItems = 'center';
 
     app.ticker.add((time) =>
     {
-      text.text = 'score : ' + score;
+    text.text = 'score : ' + score;
 
-      let move = movement(keys, CONTROLS, playerSpeed, playerDiagonalSpeed);
-      mc.x += move.x;
-      mc.y += move.y;
+    // met a jour la vitesse du joueur en fonction de la touche slow
+    if (keys[CONTROLS['slow']]) {
+      playerSpeed = SPEEDSLOW;
+      playerDiagonalSpeed = DIAGONALSPEEDSLOW;
+    } else {
+      playerSpeed = SPEED;
+      playerDiagonalSpeed = DIAGONALSPEED;
+    }
+
+    let move = movement(keys, CONTROLS, playerSpeed, playerDiagonalSpeed);
+    mc.x += move.x;
+    mc.y += move.y;
 
     // Applique les limites de la zone de jeu
     applyGameZoneBounds(mc, app.screen.width, app.screen.height);
 
+    let upgradeState = getUpgradestate(killcount_upgrade);
+    cooldown = COOLDOWNUPDGRADE[upgradeState] || DEFAULTCOOLDOWN;
+
     // lance les projectiles si on presse k
-    if (keys['k']) {
+    if (keys[CONTROLS['shoot']]) {
         // coordonnee de ou ca tire
         let tircoord_x = mc.x - 15;
         let tircoord_y = mc.y - 55;
 
       switch (getUpgradestate(killcount_upgrade)) {
         case "1":
-          tir(tircoord_x, tircoord_y);
-          break;
-        case "2":
-          cooldown = 60;
-          tirDouble(tircoord_x, tircoord_y);
-
-          break;
-        case "3":
-          cooldown = 50;
-          tirDouble(tircoord_x, tircoord_y);
+          tirMultiple(tircoord_x, tircoord_y);
           break;
         default:
-          tir(tircoord_x, tircoord_y);
+          // tir double
+          tirMultiple(tircoord_x, tircoord_y, [-15, 15]);
+          break;
       }
     }
 
