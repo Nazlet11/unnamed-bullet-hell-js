@@ -80,10 +80,11 @@ document.body.style.alignItems = 'center';
     const keys = {};
 
     const CONTROLS = {
-      'z': 'up',
-      's': 'down',
-      'q': 'left',
-      'd': 'right'
+      'up': 'z',
+      'down': 's',
+      'left': 'q',
+      'right': 'd',
+      'shoot': 'k',
     }
 
 
@@ -265,9 +266,16 @@ document.body.style.alignItems = 'center';
   //// Fonction pour determiner si on upgrade le shoot
   //jvais le mettre ds la fonction tir nn enft laisse tomber
   function getUpgradestate(nombredekill){
-    if (nombredekill < 10) return "1";
-    if (nombredekill >= 10 && nombredekill < 30) return "2";
-    if (nombredekill > 30) return "3";
+    const thresholds = [
+      {"min": 30, "upgradeState": "3"},
+      {"min": 10, "upgradeState": "2"},
+      {"min": 0, "upgradeState": "1"}
+    ]
+    for (const threshold of thresholds) {
+      if (nombredekill >= threshold.min) {
+        return threshold.upgradeState;
+      }
+    }
   }
 
   
