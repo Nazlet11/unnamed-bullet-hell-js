@@ -66,9 +66,12 @@ document.body.style.alignItems = 'center';
     mc.y = app.screen.height * 0.72;
 
     // vitesse 
-    let speed = 1.70;
-    let diagonalSpeed = speed / Math.sqrt(2); //  1.2020815280171306
-    let diagonalSpeedslow = 0.601040764;
+    const SPEED = 1.70;
+    const SPEEDSLOW = 0.85;
+    const DIAGONALSPEED = SPEED / Math.sqrt(2); //  1.2020815280171306
+    const DIAGONALSPEEDSLOW = SPEEDSLOW / Math.sqrt(2); // 0.6030407640085653
+    let playerSpeed = SPEED;
+    let playerDiagonalSpeed = DIAGONALSPEED;
     let score = 0;
     let killcount = 0;
     // nombre de kills pour savoir si on ameliore l'attaque paprce que ce sera decidé par le nombre de kill et qui se reset qd on prend un coup
@@ -118,19 +121,10 @@ document.body.style.alignItems = 'center';
   // j'ai pas reussi a faire un wait(); comme dans python ou jsp parce que tt est en async ou juste cc parce que c'est du javascript jsp dc
   // dc jvais faire un if le temps depuis le dernier tir est au dessus du cooldown la on tire
 
-
-
-
-
-
   // unix time stamp depuis le dernier tir
   let depuisderniertir = 0;
   // cooldown entre chaquetir en ms
   let cooldown = 120;
-  
-
-
-
 
   // on rentre en parametre la position des tir ou ils commencent
   function tir(x, y){
@@ -150,9 +144,6 @@ document.body.style.alignItems = 'center';
     projectile.y = y;
     // l applique au truc
 
-
-    
-
     app.stage.addChild(projectile);
     projectiles.push(projectile);
   }
@@ -168,11 +159,6 @@ document.body.style.alignItems = 'center';
     // (unix time stamp de mtn - unix time stamp du dernier tir < cooldown)
     if (mtn - depuisderniertir < cooldown) return; // si trop tot sort de la fonction
     depuisderniertir = mtn; // sinon, on enregistre le moment du tir
-    
-
-
-
-
 
     // crée un nv sprite
     const projectileDroit = new Sprite(textureprojectile);
@@ -197,41 +183,23 @@ document.body.style.alignItems = 'center';
   }
 
 
-
-
-  
-
-
-  
   //// Fonction collision pour joueur
 
-  function isColliding(sprite1, sprite2) {
+  function isColliding(sprite1, sprite2, shrinkAmount = 40) {
     const bounds1 = sprite1.getBounds();
     const bounds2 = sprite2.getBounds();
-
-
-    return (
-      bounds1.x + 30 < bounds2.x + bounds2.width &&
-      bounds1.x - 30 + bounds1.width > bounds2.x &&
-      bounds1.y + 45 < bounds2.y + bounds2.height &&
-      bounds1.y - 45 + bounds1.height > bounds2.y
-    );
+    // Ajuste les bords du sprite1 pour la collision
+    const squaredDist = (bounds1.x + bounds2.x) ** 2 + (bounds1.y + bounds2.y) ** 2;
+    bounds1.radius = Math.max(bounds1.width, bounds1.height) / 2 - shrinkAmount;
+    bounds2.radius = Math.max(bounds2.width, bounds2.height) / 2 - shrinkAmount;
+    return (squaredDist < (bounds1.radius + bounds2.radius) ** 2);
   }
 
   //// Fonction pour collision
 
   function isCollidingtir(sprite1, sprite2) {
-  const bounds1 = sprite1.getBounds();
-  const bounds2 = sprite2.getBounds();
-
-
-  return (
-    bounds1.x + 10< bounds2.x + bounds2.width &&
-    bounds1.x - 10+ bounds1.width > bounds2.x &&
-    bounds1.y + 15< bounds2.y + bounds2.height &&
-    bounds1.y - 15+ bounds1.height > bounds2.y
-  );
-}
+    return isColliding(sprite1, sprite2, 10);
+  }
 
 
 
@@ -267,13 +235,11 @@ document.body.style.alignItems = 'center';
     score += 20;
   }
 
-
-
   //// Fonctions pour marcher dans chaque direction
   //laisse tomber ca c est du spaghetti code admire
 
   // fix diagonal haut gauche
-  function marcheGauche(){
+  function marcheGauche(speed, diagonalSpeed){
     if (keys['z'] && keys['q']) {
       mc.x -= diagonalSpeed;
       mc.y -= diagonalSpeed;
@@ -285,7 +251,7 @@ document.body.style.alignItems = 'center';
   }
 
   // fix diagonal haut droit
-  function marcheHaut(){
+  function marcheHaut(speed, diagonalSpeed){
     if (keys['z'] && keys['d']) {
       mc.x += diagonalSpeed;
       mc.y -= diagonalSpeed;
@@ -297,7 +263,7 @@ document.body.style.alignItems = 'center';
   }
 
   // fix diagonal bas gauche
-  function marcheBas(){
+  function marcheBas(speed, diagonalSpeed){
     if (keys['s'] && keys['q']) {
       mc.y += diagonalSpeed;
       mc.x -= diagonalSpeed;
@@ -310,7 +276,7 @@ document.body.style.alignItems = 'center';
 
 
   // fix diagonal bas droit
-  function marcheDroit(){
+  function marcheDroit(speed, diagonalSpeed){
     if (keys['s'] && keys['d']) {
       mc.y += diagonalSpeed;
       mc.x += diagonalSpeed;
@@ -321,8 +287,6 @@ document.body.style.alignItems = 'center';
     }
   }
 
-
-
   //// Fonction pour determiner si on upgrade le shoot
   //jvais le mettre ds la fonction tir nn enft laisse tomber
   function getUpgradestate(nombredekill){
@@ -331,31 +295,7 @@ document.body.style.alignItems = 'center';
     if (nombredekill > 30) return "3";
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  
   // detecte les touches pressées
 
   window.addEventListener('keydown', (e) => {
@@ -363,8 +303,8 @@ document.body.style.alignItems = 'center';
     keys[key] = true;
     // ralentit si on presse latouche j
     if (key === 'j') {
-      speed = 0.85;
-      diagonalSpeed = diagonalSpeedslow;
+      playerSpeed = SPEEDSLOW;
+      playerDiagonalSpeed = DIAGONALSPEEDSLOW;
     }
 
     if (key === 't') {
@@ -388,50 +328,16 @@ document.body.style.alignItems = 'center';
     keys[key] = false;
     // relache j
     if (key === 'j') {
-      speed = 1.70;
-      diagonalSpeed = 1.2020815280171306
+      playerSpeed = SPEED;
+      playerDiagonalSpeed = DIAGONALSPEED;
     }
 
 
   });
 
 
-
-
-
-
     app.stage.addChild(text);
     app.stage.addChild(mc);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
 
 
     // la game loop cogno
@@ -456,14 +362,6 @@ document.body.style.alignItems = 'center';
       if (mc.y < 880 && mc.x < 670){ // sd
       marcheDroit();
       }
-          
-
-
-
-
-
-
-
 
 
     // lance les projectiles si on presse k
@@ -540,13 +438,7 @@ document.body.style.alignItems = 'center';
         xps.splice(k, 1);
       }
     }
-
-
-
-
-
+    
   });
-
-
 
 })();
