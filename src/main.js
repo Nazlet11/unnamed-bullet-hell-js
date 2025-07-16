@@ -79,7 +79,12 @@ document.body.style.alignItems = 'center';
     // tableau keys
     const keys = {};
 
-
+    const CONTROLS = {
+      'z': 'up',
+      's': 'down',
+      'q': 'left',
+      'd': 'right'
+    }
 
 
     // Texte 
@@ -108,15 +113,9 @@ document.body.style.alignItems = 'center';
   }
 
 
-  
 
 
-
-  ////////////////////// Faut aussi faire en sorte que le perso puisse pas sortir de l'écran
-
-
-
-  //// Fonction tirt
+  //// Fonction tir
 
   // j'ai pas reussi a faire un wait(); comme dans python ou jsp parce que tt est en async ou juste cc parce que c'est du javascript jsp dc
   // dc jvais faire un if le temps depuis le dernier tir est au dessus du cooldown la on tire
@@ -195,12 +194,6 @@ document.body.style.alignItems = 'center';
     return (squaredDist < (bounds1.radius + bounds2.radius) ** 2);
   }
 
-  //// Fonction pour collision
-
-  function isCollidingtir(sprite1, sprite2) {
-    return isColliding(sprite1, sprite2, 10);
-  }
-
 
 
   //// Fonction pour drop xp 
@@ -238,53 +231,35 @@ document.body.style.alignItems = 'center';
   //// Fonctions pour marcher dans chaque direction
   //laisse tomber ca c est du spaghetti code admire
 
-  // fix diagonal haut gauche
-  function marcheGauche(speed, diagonalSpeed){
-    if (keys['z'] && keys['q']) {
-      mc.x -= diagonalSpeed;
-      mc.y -= diagonalSpeed;
-    } else if (keys['q']) {     
-      mc.x -= speed;
-    } else if (keys['z']) {
-      mc.y -= speed;
+  function movement(keys, controls, playerSpeed, playerDiagonalSpeed) {
+    mov = { x: 0, y: 0 };
+    if (keys[controls['up']]) {
+      mov.y -= playerSpeed;
     }
+    if (keys[controls['down']]) {
+      mov.y += playerSpeed;
+    }
+    if (keys[controls['left']]) {
+      mov.x -= playerSpeed;
+    }
+    if (keys[controls['right']]) {
+      mov.x += playerSpeed;
+    }
+
+    // Fix diagonal speed
+    if (mov.x !== 0 && mov.y !== 0) {
+      mov.x *= playerDiagonalSpeed;
+      mov.y *= playerDiagonalSpeed;
+    }
+    return mov;
   }
 
-  // fix diagonal haut droit
-  function marcheHaut(speed, diagonalSpeed){
-    if (keys['z'] && keys['d']) {
-      mc.x += diagonalSpeed;
-      mc.y -= diagonalSpeed;
-    } else if (keys['d']) {
-      mc.x += speed;
-    } else if (keys['z']) {
-      mc.y -= speed;
-    }
-  }
-
-  // fix diagonal bas gauche
-  function marcheBas(speed, diagonalSpeed){
-    if (keys['s'] && keys['q']) {
-      mc.y += diagonalSpeed;
-      mc.x -= diagonalSpeed;
-    } else if (keys['s']) {
-      mc.y += speed
-    } else if (keys['q']) {
-      mc.x -= speed;
-    }
-  }
-
-
-  // fix diagonal bas droit
-  function marcheDroit(speed, diagonalSpeed){
-    if (keys['s'] && keys['d']) {
-      mc.y += diagonalSpeed;
-      mc.x += diagonalSpeed;
-    } else if (keys['s']) {
-      mc.y += speed
-    } else if (keys['d']) {
-      mc.x += speed;
-    }
+  function applyGameZoneBounds(sprite, screenWidth, screenHeight) {
+    // Applique les limites de la zone de jeu
+    if (sprite.x < 0) sprite.x = 0;
+    if (sprite.x > screenWidth) sprite.x = screenWidth;
+    if (sprite.y < 0) sprite.y = 0;
+    if (sprite.y > screenHeight) sprite.y = screenHeight;
   }
 
   //// Fonction pour determiner si on upgrade le shoot
@@ -346,23 +321,12 @@ document.body.style.alignItems = 'center';
     {
       text.text = 'score : ' + score;
 
+      let move = movement(keys, CONTROLS, playerSpeed, playerDiagonalSpeed);
+      mc.x += move.x;
+      mc.y += move.y;
 
-      if (mc.y > 0 && mc.x > 0){
-        marcheGauche();
-      }
-
-      if (mc.y > 0 && mc.x < 670){
-        marcheHaut();
-      }
-
-      if (mc.y < 880 && mc.x > 0){ // sq
-      marcheBas();
-      }
-
-      if (mc.y < 880 && mc.x < 670){ // sd
-      marcheDroit();
-      }
-
+    // Applique les limites de la zone de jeu
+    applyGameZoneBounds(mc, app.screen.width, app.screen.height);
 
     // lance les projectiles si on presse k
     if (keys['k']) {
@@ -413,7 +377,7 @@ document.body.style.alignItems = 'center';
       // verifie collision avec ennemis
       for (let j = ennemis.length - 1; j >= 0; j--) {
         const ennemi = ennemis[j];
-        if (isCollidingtir(proj, ennemi)) {
+        if (isColliding(proj, ennemi, 10)) {
           dropXp(ennemi.x, ennemi.y);
           killcount_upgrade += 1;
 
@@ -432,7 +396,7 @@ document.body.style.alignItems = 'center';
       const xp = xps[k];
       xp.y += 0.75; 
 
-      if (isCollidingtir(mc, xp)) {
+      if (isColliding(mc, xp, 10)) {
         giveScore(xp);
         app.stage.removeChild(xp);
         xps.splice(k, 1);
