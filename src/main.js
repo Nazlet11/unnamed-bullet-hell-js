@@ -32,25 +32,30 @@ document.body.style.alignItems = 'center';
     // Append the application canvas to the document body
     document.body.appendChild(app.canvas);
 
-    // Load the bunny texture
-    const texturemc = await Assets.load('/public/perso/TEST.png');
-    const textureprojectile = await Assets.load('/public/trucs/projectile.png');
-    const textureennemi1 = await Assets.load('/public/ennemi/stage1/ennemi1.png');
-    const texturexp = await Assets.load('/public/trucs/XP.png');
-    
+    // Load the textures
+    await Assets.loadBundle('textures', {
+      mc: '/public/perso/TEST.png',
+      projectile: '/public/trucs/projectile.png',
+      ennemi1: '/public/ennemi/stage1/ennemi1.png',
+      xp: '/public/trucs/XP.png',
+    })
+    .catch((error) => {
+      console.error('Error loading textures:', error);
+    });
+
+    const texturemc = Assets.get('mc');
+    const textureprojectile = Assets.get('projectile');
+    const textureennemi1 = Assets.get('ennemi1');
+    const texturexp = Assets.get('xp');
+
 
     // cree les sprites 
     const mc = new Sprite(texturemc);
-    const projectile = new Sprite(textureprojectile);
-    const ennemi1 = new Sprite(textureennemi1);
-    const xp = new Sprite(texturexp);
 
     ///sprite.width = 200;
     ///sprite.height = 400;
     ///sprite.scale.set(1, 1);
 
-    // Cree l objet bounds
-    const bounds = new Bounds();
 
     // creation du tableau des ennemis
     let ennemis = [];
@@ -66,17 +71,30 @@ document.body.style.alignItems = 'center';
     mc.y = app.screen.height * 0.72;
 
     // vitesse 
-    let speed = 1.70;
-    let diagonalSpeed = speed / Math.sqrt(2); //  1.2020815280171306
-    let diagonalSpeedslow = 0.601040764;
-    let score = 0;
-    let killcount = 0;
+    const SPEED = 1.70;
+    const SPEEDSLOW = 0.85;
+    const DIAGONALSPEED = SPEED / Math.sqrt(2); //  1.2020815280171306
+    const DIAGONALSPEEDSLOW = SPEEDSLOW / Math.sqrt(2); // 0.6030407640085653
+    let playerSpeed = SPEED;
+    let playerDiagonalSpeed = DIAGONALSPEED;
+
+    // upgrades
     // nombre de kills pour savoir si on ameliore l'attaque paprce que ce sera decidé par le nombre de kill et qui se reset qd on prend un coup
+    let score = 0;
     let killcount_upgrade = 0;
-    // tableau keys
+    const COOLDOWNUPDGRADE = {"1": 120, "2": 60, "3": 50};
+    const DEFAULTCOOLDOWN = COOLDOWNUPDGRADE["1"]; // Au cas ou il y ait un bug avec les updgrade
+    
+    // keys
     const keys = {};
-
-
+    const CONTROLS = {
+      'up': 'z',
+      'down': 's',
+      'left': 'q',
+      'right': 'd',
+      'shoot': 'k',
+      'slow': 'j'
+    }
 
 
     // Texte 
@@ -105,133 +123,53 @@ document.body.style.alignItems = 'center';
   }
 
 
-  
 
 
-
-  ////////////////////// Faut aussi faire en sorte que le perso puisse pas sortir de l'écran
-
-
-
-  //// Fonction tirt
+  //// Fonction tir
 
   // j'ai pas reussi a faire un wait(); comme dans python ou jsp parce que tt est en async ou juste cc parce que c'est du javascript jsp dc
   // dc jvais faire un if le temps depuis le dernier tir est au dessus du cooldown la on tire
-
-
-
-
-
 
   // unix time stamp depuis le dernier tir
   let depuisderniertir = 0;
   // cooldown entre chaquetir en ms
   let cooldown = 120;
-  
 
-
-
+  function isTooEarly() {
+    // temps en unix de "mtn"
+    const mtn = Date.now();
+    // (unix time stamp de mtn - unix time stamp du dernier tir < cooldown)
+    if (mtn - depuisderniertir < cooldown) return true; // si trop tot sort de la fonction
+    return false;
+  }
 
   // on rentre en parametre la position des tir ou ils commencent
-  function tir(x, y){
+  function tirMultiple(x, y, offsets=[0]) {
+    if (isTooEarly()) return; // si trop tot sort de la fonction
 
-    // temps en unix de "mtn"
-    const mtn = Date.now();
+    for (const offset of offsets) {
+      const projectile = new Sprite(textureprojectile);
+      projectile.x = x + offset;
+      projectile.y = y;
 
-    // (unix time stamp de mtn - unix time stamp du dernier tir < cooldown)
-    if (mtn - depuisderniertir < cooldown) return; // si trop tot sort de la fonction
-    depuisderniertir = mtn; // sinon, on enregistre le moment du tir
-    
-    // crée un nv sprite
-    const projectile = new Sprite(textureprojectile);
-
-    // place les projectiles au dessus du perso
-    projectile.x = x;
-    projectile.y = y;
-    // l applique au truc
-
-
-    
-
-    app.stage.addChild(projectile);
-    projectiles.push(projectile);
+      app.stage.addChild(projectile);
+      projectiles.push(projectile);
+    }
   }
 
 
 
-
-  function tirDouble(x, y){
-
-    // temps en unix de "mtn"
-    const mtn = Date.now();
-
-    // (unix time stamp de mtn - unix time stamp du dernier tir < cooldown)
-    if (mtn - depuisderniertir < cooldown) return; // si trop tot sort de la fonction
-    depuisderniertir = mtn; // sinon, on enregistre le moment du tir
-    
-
-
-
-
-
-    // crée un nv sprite
-    const projectileDroit = new Sprite(textureprojectile);
-
-    // place les projectiles au dessus du perso
-    projectileDroit.x = x + 20;
-    projectileDroit.y = y;
-    // l applique au truc
-
-    app.stage.addChild(projectileDroit);
-    projectiles.push(projectileDroit);
-
-    const projectileGauche = new Sprite(textureprojectile);
-
-    // place les projectiles au dessus du perso
-    projectileGauche.x = x - 20;
-    projectileGauche.y = y;
-    // l applique au truc
-
-    app.stage.addChild(projectileGauche);
-    projectiles.push(projectileGauche);
-  }
-
-
-
-
-  
-
-
-  
   //// Fonction collision pour joueur
 
-  function isColliding(sprite1, sprite2) {
+  function isColliding(sprite1, sprite2, shrinkAmount = 40) {
     const bounds1 = sprite1.getBounds();
     const bounds2 = sprite2.getBounds();
-
-
-    return (
-      bounds1.x + 30 < bounds2.x + bounds2.width &&
-      bounds1.x - 30 + bounds1.width > bounds2.x &&
-      bounds1.y + 45 < bounds2.y + bounds2.height &&
-      bounds1.y - 45 + bounds1.height > bounds2.y
-    );
+    // Ajuste les bords du sprite1 pour la collision
+    const squaredDist = (bounds1.x - bounds2.x) ** 2 + (bounds1.y - bounds2.y) ** 2;
+    bounds1.radius = Math.max(bounds1.width, bounds1.height) / 2 - shrinkAmount;
+    bounds2.radius = Math.max(bounds2.width, bounds2.height) / 2 - shrinkAmount;
+    return (squaredDist < (bounds1.radius + bounds2.radius) ** 2);
   }
-
-  //// Fonction pour collision
-
-  function isCollidingtir(sprite1, sprite2) {
-  const bounds1 = sprite1.getBounds();
-  const bounds2 = sprite2.getBounds();
-
-
-  return (
-    bounds1.x + 10< bounds2.x + bounds2.width &&
-    bounds1.x - 10+ bounds1.width > bounds2.x &&
-    bounds1.y + 15< bounds2.y + bounds2.height &&
-    bounds1.y - 15+ bounds1.height > bounds2.y
-  );
-}
 
 
 
@@ -267,105 +205,61 @@ document.body.style.alignItems = 'center';
     score += 20;
   }
 
-
-
   //// Fonctions pour marcher dans chaque direction
   //laisse tomber ca c est du spaghetti code admire
 
-  // fix diagonal haut gauche
-  function marcheGauche(){
-    if (keys['z'] && keys['q']) {
-      mc.x -= diagonalSpeed;
-      mc.y -= diagonalSpeed;
-    } else if (keys['q']) {     
-      mc.x -= speed;
-    } else if (keys['z']) {
-      mc.y -= speed;
+  function movement(keys, controls, playerSpeed, playerDiagonalSpeed) {
+    let mov = { x: 0, y: 0 };
+    if (keys[controls['up']]) {
+      mov.y -= playerSpeed;
     }
+    if (keys[controls['down']]) {
+      mov.y += playerSpeed;
+    }
+    if (keys[controls['left']]) {
+      mov.x -= playerSpeed;
+    }
+    if (keys[controls['right']]) {
+      mov.x += playerSpeed;
+    }
+
+    // Fix diagonal speed
+    if (mov.x !== 0 && mov.y !== 0) {
+      mov.x *= playerDiagonalSpeed;
+      mov.y *= playerDiagonalSpeed;
+    }
+    return mov;
   }
 
-  // fix diagonal haut droit
-  function marcheHaut(){
-    if (keys['z'] && keys['d']) {
-      mc.x += diagonalSpeed;
-      mc.y -= diagonalSpeed;
-    } else if (keys['d']) {
-      mc.x += speed;
-    } else if (keys['z']) {
-      mc.y -= speed;
-    }
+  function applyGameZoneBounds(sprite, screenWidth, screenHeight) {
+    // Applique les limites de la zone de jeu
+    if (sprite.x < 0) sprite.x = 0;
+    if (sprite.x > screenWidth) sprite.x = screenWidth;
+    if (sprite.y < 0) sprite.y = 0;
+    if (sprite.y > screenHeight) sprite.y = screenHeight;
   }
-
-  // fix diagonal bas gauche
-  function marcheBas(){
-    if (keys['s'] && keys['q']) {
-      mc.y += diagonalSpeed;
-      mc.x -= diagonalSpeed;
-    } else if (keys['s']) {
-      mc.y += speed
-    } else if (keys['q']) {
-      mc.x -= speed;
-    }
-  }
-
-
-  // fix diagonal bas droit
-  function marcheDroit(){
-    if (keys['s'] && keys['d']) {
-      mc.y += diagonalSpeed;
-      mc.x += diagonalSpeed;
-    } else if (keys['s']) {
-      mc.y += speed
-    } else if (keys['d']) {
-      mc.x += speed;
-    }
-  }
-
-
 
   //// Fonction pour determiner si on upgrade le shoot
   //jvais le mettre ds la fonction tir nn enft laisse tomber
   function getUpgradestate(nombredekill){
-    if (nombredekill < 10) return "1";
-    if (nombredekill >= 10 && nombredekill < 30) return "2";
-    if (nombredekill > 30) return "3";
+    const thresholds = [
+      {"min": 30, "upgradeState": "3"},
+      {"min": 10, "upgradeState": "2"},
+      {"min": 0, "upgradeState": "1"}
+    ]
+    for (const threshold of thresholds) {
+      if (nombredekill >= threshold.min) {
+        return threshold.upgradeState;
+      }
+    }
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  
   // detecte les touches pressées
 
   window.addEventListener('keydown', (e) => {
     const key = e.key.toLowerCase();
     keys[key] = true;
-    // ralentit si on presse latouche j
-    if (key === 'j') {
-      speed = 0.85;
-      diagonalSpeed = diagonalSpeedslow;
-    }
 
     if (key === 't') {
       for (let i = 0; i < 15; i++) {
@@ -386,107 +280,54 @@ document.body.style.alignItems = 'center';
   window.addEventListener('keyup', (e) => {
     const key = e.key.toLowerCase();
     keys[key] = false;
-    // relache j
-    if (key === 'j') {
-      speed = 1.70;
-      diagonalSpeed = 1.2020815280171306
-    }
 
 
   });
-
-
-
-
 
 
     app.stage.addChild(text);
     app.stage.addChild(mc);
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
     // la game loop cogno
 
     app.ticker.add((time) =>
     {
-      text.text = 'score : ' + score;
+    text.text = 'score : ' + score;
 
+    // met a jour la vitesse du joueur en fonction de la touche slow
+    if (keys[CONTROLS['slow']]) {
+      playerSpeed = SPEEDSLOW;
+      playerDiagonalSpeed = DIAGONALSPEEDSLOW;
+    } else {
+      playerSpeed = SPEED;
+      playerDiagonalSpeed = DIAGONALSPEED;
+    }
 
-      if (mc.y > 0 && mc.x > 0){
-        marcheGauche();
-      }
+    let move = movement(keys, CONTROLS, playerSpeed, playerDiagonalSpeed);
+    mc.x += move.x;
+    mc.y += move.y;
 
-      if (mc.y > 0 && mc.x < 670){
-        marcheHaut();
-      }
+    // Applique les limites de la zone de jeu
+    applyGameZoneBounds(mc, app.screen.width, app.screen.height);
 
-      if (mc.y < 880 && mc.x > 0){ // sq
-      marcheBas();
-      }
-
-      if (mc.y < 880 && mc.x < 670){ // sd
-      marcheDroit();
-      }
-          
-
-
-
-
-
-
-
-
+    let upgradeState = getUpgradestate(killcount_upgrade);
+    cooldown = COOLDOWNUPDGRADE[upgradeState] || DEFAULTCOOLDOWN;
 
     // lance les projectiles si on presse k
-    if (keys['k']) {
+    if (keys[CONTROLS['shoot']]) {
         // coordonnee de ou ca tire
         let tircoord_x = mc.x - 15;
         let tircoord_y = mc.y - 55;
 
       switch (getUpgradestate(killcount_upgrade)) {
         case "1":
-          tir(tircoord_x, tircoord_y);
-          break;
-        case "2":
-          cooldown = 60;
-          tirDouble(tircoord_x, tircoord_y);
-
-          break;
-        case "3":
-          cooldown = 50;
-          tirDouble(tircoord_x, tircoord_y);
+          tirMultiple(tircoord_x, tircoord_y);
           break;
         default:
-          tir(tircoord_x, tircoord_y);
+          // tir double
+          tirMultiple(tircoord_x, tircoord_y, [-15, 15]);
+          break;
       }
     }
 
@@ -515,7 +356,7 @@ document.body.style.alignItems = 'center';
       // verifie collision avec ennemis
       for (let j = ennemis.length - 1; j >= 0; j--) {
         const ennemi = ennemis[j];
-        if (isCollidingtir(proj, ennemi)) {
+        if (isColliding(proj, ennemi, 10)) {
           dropXp(ennemi.x, ennemi.y);
           killcount_upgrade += 1;
 
@@ -534,19 +375,13 @@ document.body.style.alignItems = 'center';
       const xp = xps[k];
       xp.y += 0.75; 
 
-      if (isCollidingtir(mc, xp)) {
+      if (isColliding(mc, xp, 10)) {
         giveScore(xp);
         app.stage.removeChild(xp);
         xps.splice(k, 1);
       }
     }
-
-
-
-
-
+    
   });
-
-
 
 })();
